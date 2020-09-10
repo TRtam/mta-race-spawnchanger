@@ -1,0 +1,8 @@
+<meta>
+    <!-- info -->
+    <info name="SpawnChanger" author="TRtam" type="script" version="1.0"/>
+
+    <!-- script -->
+    <script src="server/spawnchanger.lua" type="server"/>
+    <script src="client/spawnchanger.lua" type="client" cache="false"/>
+</meta>
