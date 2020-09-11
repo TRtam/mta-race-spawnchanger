@@ -15,7 +15,7 @@ SpawnChanger.hashedMapName   = false;
 function SpawnChanger.getSpawnpoints()
     local spawnpoints = {};
 
-    for i, spawnpoint in pairs(getElementsByType("spawnpoint")) do
+    for i, spawnpoint in ipairs(getElementsByType("spawnpoint")) do
         local vModel    = getElementData(spawnpoint, "vehicle");
         local vPosition = {getElementData(spawnpoint, "posX"), getElementData(spawnpoint, "posY"), getElementData(spawnpoint, "posZ")};
         local vRotation = {getElementData(spawnpoint, "rotX"), getElementData(spawnpoint, "rotY"), getElementData(spawnpoint, "rotation") or getElementData(spawnpoint, "rotZ")};
@@ -28,7 +28,7 @@ function SpawnChanger.getSpawnpoints()
             setElementFrozen(vehicle, true);
             setElementDimension(vehicle, 999);
 
-            table.insert(spawnpoints, {vehicle = vehicle, vModel = vModel, vPosition = vPosition, vRotation = vRotation});
+            table.insert(spawnpoints, i, {vehicle = vehicle, vModel = vModel, vPosition = vPosition, vRotation = vRotation});
         end
     end
 
@@ -36,14 +36,12 @@ function SpawnChanger.getSpawnpoints()
 end
 
 function SpawnChanger.changeSpawnpoint(index)
-    local spawnpoint = SpawnChanger.cache[index];
+    local spawnpoint = SpawnChanger.cache[index or SpawnChanger.currentIndex];
 
     if(spawnpoint)then
-        SpawnChanger.currentIndex = index;
-
         triggerServerEvent("SpawnChanger.changeSpawnpoint", resourceRoot, spawnpoint.vModel, spawnpoint.vPosition, spawnpoint.vRotation);
 
-        for i, spawnpoint in pairs(SpawnChanger.cache) do
+        for i, spawnpoint in ipairs(SpawnChanger.cache) do
             if(isElement(spawnpoint.vehicle))then
                 if(i == SpawnChanger.currentIndex)then
                     setElementAlpha(spawnpoint.vehicle, 0);
@@ -67,19 +65,19 @@ function SpawnChanger.handleMapStarting(mapInfo)
         local file = fileOpen("spawnpoints/" .. SpawnChanger.hashedMapName, true);
 
         if(file)then
-            local fileSize = fileGetSize(file);
+            local fileSize    = fileGetSize(file);
             local fileContent = fileRead(file, fileSize);
             fileContent       = tonumber(fileContent);
 
             fileClose(file);
 
             if(fileContent)then
-                SpawnChanger.currentIndex = math.min(math.max(SpawnChanger.minIndex, SpawnChanger.currentIndex), SpawnChanger.maxIndex);
+                SpawnChanger.currentIndex = math.min(math.max(SpawnChanger.minIndex, fileContent), SpawnChanger.maxIndex);
             end
         end
     end
 
-    SpawnChanger.changeSpawnpoint(SpawnChanger.currentIndex);
+    SpawnChanger.changeSpawnpoint();
 end
 addEvent("onClientMapStarting");
 addEventHandler("onClientMapStarting", localPlayer, SpawnChanger.handleMapStarting);
@@ -88,10 +86,10 @@ function SpawnChanger.handleMouseWheel(key, state)
     if(SpawnChanger.enabled)then
         if(key == "mouse_wheel_up")then
             SpawnChanger.currentIndex = math.max(SpawnChanger.minIndex, SpawnChanger.currentIndex - 1);
-            SpawnChanger.changeSpawnpoint(SpawnChanger.currentIndex);
+            SpawnChanger.changeSpawnpoint();
         elseif(key == "mouse_wheel_down")then
             SpawnChanger.currentIndex = math.min(SpawnChanger.maxIndex, SpawnChanger.currentIndex + 1);
-            SpawnChanger.changeSpawnpoint(SpawnChanger.currentIndex);
+            SpawnChanger.changeSpawnpoint();
         end
     end
 end
@@ -104,7 +102,7 @@ function SpawnChanger.handleKey(key, pressed)
             if(pressed)then
                 showCursor(true);
 
-                for i, spawnpoint in pairs(SpawnChanger.cache) do
+                for i, spawnpoint in ipairs(SpawnChanger.cache) do
                     if(isElement(spawnpoint.vehicle))then
                         setElementDimension(spawnpoint.vehicle, getElementDimension(localPlayer));
 
@@ -132,10 +130,10 @@ addEventHandler("onClientKey", root, SpawnChanger.handleKey);
 function SpawnChanger.handleMouseClick(button, state, cursorX, cursorY, worldX, worldY, worldZ, clickedElement)
     if(SpawnChanger.enabled)then
         if(button == "left" and state == "down" and isElement(clickedElement))then
-            for i, spawnpoint in pairs(SpawnChanger.cache) do
+            for i, spawnpoint in ipairs(SpawnChanger.cache) do
                 if(isElement(spawnpoint.vehicle) and spawnpoint.vehicle == clickedElement)then
                     SpawnChanger.currentIndex = i;
-                    SpawnChanger.changeSpawnpoint(SpawnChanger.currentIndex);
+                    SpawnChanger.changeSpawnpoint();
                 end
             end
         end
@@ -160,6 +158,7 @@ function SpawnChanger.handleRaceStateChanging(state)
 
             if(file)then
                 fileWrite(file, tostring(SpawnChanger.currentIndex));
+                fileFlush(file);
                 fileClose(file);
             end
         end
