@@ -146,8 +146,8 @@ addEventHandler("onClientClick", root, SpawnChanger.handleMouseClick);
 function SpawnChanger.handleRaceStateChanging(state)
     if(state == "GridCountdown")then
         for i, spawnpoint in pairs(SpawnChanger.cache) do
-            if(isElement(SpawnChanger.vehicle))then
-                destroyElement(SpawnChanger.vehicle);
+            if(isElement(spawnpoint.vehicle))then
+                destroyElement(spawnpoint.vehicle);
             end
         end
 
